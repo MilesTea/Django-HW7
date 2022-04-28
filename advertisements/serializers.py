@@ -45,7 +45,12 @@ class AdvertisementSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Метод для валидации. Вызывается при создании и обновлении."""
-
-        if len(list(Advertisement.objects.filter(creator=self.context['request'].user))) >= 10:
-            raise ValidationError
+        if len(list(Advertisement.objects.filter(creator=self.context['request'].user, status='OPEN'))) >= 10:
+            if self.context['request'].method == 'POST':
+                raise ValidationError('Too much open advertisements')
+            elif self.context['request'].method == 'PATCH':
+                _data = dict(data)
+                if _data.get('status', False) == 'CLOSED':
+                    return data
+            raise ValidationError('Too much open advertisements')
         return data
